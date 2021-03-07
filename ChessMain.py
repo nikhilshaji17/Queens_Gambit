@@ -1,7 +1,7 @@
 #This file is responsible for the actual working of the game
 
 import pygame as p
-from ChessEngine import GameState
+from ChessEngine import GameState , Move
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8 #The dimensions of the board is 8x8
@@ -27,10 +27,29 @@ def main():
     gs = GameState() 
     loadImages() #We only load the images once, that too before the while loop
     running = True
+    sqSelected = tuple() #tuple to store the last click of the user. It'll be a tuple which is of the form (row,col)
+    playerClicks = [] #keeps tracks of player clicks (two tuples) (example: [(6,4),(4,4)] i.e, moving a black pawn from e7 to e5)
     while running:
         for e in p.event.get(): #This line of code goes through the event queue, i.e, all the event calls that happen like mouse clicks, button presses etc.
             if e.type == p.QUIT:
                 running = False
+            elif e.type == p.MOUSEBUTTONDOWN: #Adding the ability to interact with the pieces
+                location = p.mouse.get_pos() #storing the (x,y) coordinate
+                col = location[0] // SQ_SIZE 
+                row = location[1] // SQ_SIZE #Storing the square the user clicked on
+                if sqSelected == (row,col): #In case the user clicks the same square twice
+                    sqSelected = () #Deselecting the square
+                    playerClicks = [] #Clearing the player clicks again
+                else:
+                    sqSelected = (row,col)
+                    playerClicks.append(sqSelected) #append for both the first and second clicks
+                if len(playerClicks) == 2: #after the 2nd click
+                    move = Move(playerClicks[0],playerClicks[1],gs.board)
+                    print(move.getChessNotation())
+                    gs.makeMove(move)
+                    sqSelected = () #Resetting both 
+                    playerClicks = []                    
+
         drawGameState(screen,gs)
         clock.tick(MAX_FPS)
         p.display.flip()
