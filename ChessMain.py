@@ -8,9 +8,7 @@ DIMENSION = 8 #The dimensions of the board is 8x8
 SQ_SIZE = HEIGHT//DIMENSION #Each sqaure of the board has this size (i.e 64 squares total)
 MAX_FPS = 15# For animations
 IMAGES = {}
-
 #Initialize a global dictionary of images. This will be called exactly once in main
-
 def loadImages():
     pieces = ['wR','wQ','wp','wN','wK','wB','bR','bQ','bp','bN','bK','bB'] #Using pygame to load up the images of each piece
     for piece in pieces:
@@ -25,6 +23,8 @@ def main():
     clock = p.time.Clock() #Helps to control the games framerate
     screen.fill(p.Color("white"))
     gs = GameState() 
+    validMoves = gs.getValidMoves()
+    moveMade = False #flag variable for when a move is made
     loadImages() #We only load the images once, that too before the while loop
     running = True
     sqSelected = tuple() #tuple to store the last click of the user. It'll be a tuple which is of the form (row,col)
@@ -46,17 +46,28 @@ def main():
                 if len(playerClicks) == 2: #after the 2nd click
                     move = Move(playerClicks[0],playerClicks[1],gs.board)
                     print(move.getChessNotation())
-                    gs.makeMove(move)
-                    sqSelected = () #Resetting both 
-                    playerClicks = []                    
+                    if move in validMoves:
+                        gs.makeMove(move)
+                        moveMade = True
+                        sqSelected = () #Resetting both 
+                        playerClicks = []
+                    else:
+                        playerClicks = [sqSelected]                   
+            #key handlers
+            elif e.type == p.KEYDOWN:
+                if e.key == p.K_BACKSPACE: #undo the move using backspace
+                    gs.undoMove()
+                    moveMade = True
 
+        if moveMade:
+            validMoves = gs.getValidMoves()
+            moveMade = False
         drawGameState(screen,gs)
         clock.tick(MAX_FPS)
         p.display.flip()
 
 
 #Responsible for all the graphics in the current game state.
-
 def drawGameState(screen, gs):
     drawBoard(screen) #draw squares on the board
     drawPieces(screen, gs.board) #draw pieces on top of the squares
